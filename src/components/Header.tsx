@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const menuItems = [
   {
@@ -32,8 +32,18 @@ export default function Header() {
       return pathname === "/";
     }
 
-    return pathname.startsWith(href);
+    return pathname?.startsWith(href) ?? false;
   };
+
+  useEffect(() => {
+    if (!isMenuOpen) return;
+
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isMenuOpen]);
 
   return (
     <header className="sticky top-0 z-50 border-b border-gray-200 bg-white">
@@ -127,42 +137,86 @@ export default function Header() {
         </button>
       </div>
 
-      {/* Mobile Menu */}
-      {isMenuOpen && (
-        <nav
-          className="border-t border-gray-200 bg-white px-4 py-5 md:hidden"
-          aria-label="Mobile navigation"
-        >
-          <div className="mx-auto flex max-w-7xl flex-col gap-2">
-            {menuItems.map((item) => {
-              const active = isActiveLink(item.href);
+      {/* Mobile Menu Backdrop */}
+      <div
+        className={`fixed inset-0 z-40 bg-black/50 transition-opacity duration-300 md:hidden ${
+          isMenuOpen
+            ? "pointer-events-auto opacity-100"
+            : "pointer-events-none opacity-0"
+        }`}
+        aria-hidden="true"
+        onClick={() => setIsMenuOpen(false)}
+      />
 
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setIsMenuOpen(false)}
-                  className={`rounded-lg px-4 py-3 text-sm font-medium transition-colors ${
-                    active
-                      ? "bg-black text-white"
-                      : "text-gray-600 hover:bg-gray-100 hover:text-black"
-                  }`}
-                >
-                  {item.label}
-                </Link>
-              );
-            })}
+      {/* Mobile Menu Panel */}
+      <nav
+        className={`fixed inset-y-0 left-0 z-50 flex h-dvh w-full flex-col bg-white transition-transform duration-300 ease-in-out md:hidden ${
+          isMenuOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+        aria-label="Mobile navigation"
+        aria-hidden={!isMenuOpen}
+      >
+        <div className="flex h-20 items-center justify-between border-b border-gray-200 px-4 sm:px-6">
+          <Link
+            href="/"
+            className="text-2xl font-bold text-black"
+            onClick={() => setIsMenuOpen(false)}
+          >
+            MyBrand
+          </Link>
 
-            <Link
-              href="/contact"
-              onClick={() => setIsMenuOpen(false)}
-              className="mt-2 rounded-lg bg-black px-4 py-3 text-center text-sm font-medium text-white"
+          <button
+            type="button"
+            className="flex h-10 w-10 items-center justify-center rounded-md border border-gray-200 text-black"
+            aria-label="Close menu"
+            onClick={() => setIsMenuOpen(false)}
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="24"
+              height="24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
             >
-              Get Started
-            </Link>
-          </div>
-        </nav>
-      )}
+              <path d="M18 6 6 18" />
+              <path d="m6 6 12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="flex flex-1 flex-col justify-top gap-2 px-4 py-5">
+          {menuItems.map((item) => {
+            const active = isActiveLink(item.href);
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setIsMenuOpen(false)}
+                className={`rounded-lg px-4 py-4 text-lg font-medium transition-colors ${
+                  active
+                    ? "bg-black text-white"
+                    : "text-gray-600 hover:bg-gray-100 hover:text-black"
+                }`}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
+
+          <Link
+            href="/contact"
+            onClick={() => setIsMenuOpen(false)}
+            className="mt-2 rounded-lg bg-black px-4 py-4 text-center text-lg font-medium text-white"
+          >
+            Get Started
+          </Link>
+        </div>
+      </nav>
     </header>
   );
 }
